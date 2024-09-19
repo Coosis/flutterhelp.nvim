@@ -47,6 +47,13 @@ function M.handle_output(err, data)
 		return
 	end
 
+	if output[1] == nil then
+		print("Output is nil")
+		return
+	end
+
+	output = output[1]
+
 	if output.event == nil then
 		print("Output", output)
 		return

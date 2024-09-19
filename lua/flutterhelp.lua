@@ -52,6 +52,8 @@ function M.handle_output(err, data)
 		return
 	end
 
+	write_log(output.event)
+
 	if output.event == "app.start" then
 		M.appId = output.params.appId
 		print("App started", output.params.appId)

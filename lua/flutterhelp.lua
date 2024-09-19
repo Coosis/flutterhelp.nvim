@@ -1,8 +1,12 @@
-local M = {}
+local M = {
+	appId = "",
+	id = 0,
+	pid = 0,
+}
 
 local function write_log(message)
     -- Open the file in append mode ('a' stands for append)
-    local log_file = io.open("/Users/vlad/Documents/lua/flutterhelp/log", "a")
+    local log_file = io.open("/Users/vlad/Documents/lua/flutterhelp/a.log", "a")
     if log_file then
         -- Get the current time to prefix the log entry
         local log_time = os.date("%Y-%m-%d %H:%M:%S")
@@ -19,9 +23,16 @@ end
 function M.setup(opts)
 	opts = opts or {}
 	M.id = 0
+	vim.api.nvim_create_user_command("FlutterInspect", "lua require('flutterhelp').inspect()", {})
 	vim.api.nvim_create_user_command("FlutterRunApp", "lua require('flutterhelp').runApp()", {})
 	vim.api.nvim_create_user_command("FlutterStopApp", "lua require('flutterhelp').stopApp()", {})
 	vim.api.nvim_create_user_command("FlutterReload", "lua require('flutterhelp').reload()", {})
+end
+
+function M.inspect()
+	print("appId", M.appId)
+	print("id", M.id)
+	print("pid", M.pid)
 end
 
 function M.handle_output(err, data)

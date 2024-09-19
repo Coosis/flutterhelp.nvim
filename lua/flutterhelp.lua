@@ -16,9 +16,9 @@ end
 
 function M.startDaemon()
 	M.uv = vim.uv
-	M.stdin = uv.new_pipe(false)
-	M.stdout = uv.new_pipe(false)
-	M.stderr = uv.new_pipe(false)
+	M.stdin = M.uv.new_pipe(false)
+	M.stdout = M.uv.new_pipe(false)
+	M.stderr = M.uv.new_pipe(false)
 	M.handle, M.pid = M.uv.spawn("flutter", {
 		args = {"daemon"},
 		stdio = {M.stdin, M.stdout, M.stderr},

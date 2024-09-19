@@ -3,8 +3,8 @@ local M = {}
 function M.setup(opts)
 	opts = opts or {}
 	M.id = 0
-	vim.api.nvim_create_user_command("FlutterRunApp", "lua require('flutterhelp').startDaemon()", {})
-	vim.api.nvim_create_user_command("FlutterStopApp", "lua require('flutterhelp').stopDaemon()", {})
+	vim.api.nvim_create_user_command("FlutterRunApp", "lua require('flutterhelp').runApp()", {})
+	vim.api.nvim_create_user_command("FlutterStopApp", "lua require('flutterhelp').stopApp()", {})
 	vim.api.nvim_create_user_command("FlutterReload", "lua require('flutterhelp').reload()", {})
 end
 

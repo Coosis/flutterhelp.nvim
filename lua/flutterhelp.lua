@@ -2,8 +2,10 @@ local M = {}
 
 function M.setup(opts)
 	opts = opts or {}
-	vim.api.nvim_create_user_command("StartFlutterDaemon", "lua require('flutterhelp').startDaemon()", {})
-	vim.api.nvim_create_user_command("StopFlutterDaemon", "lua require('flutterhelp').stopDaemon()", {})
+	M.id = 0
+	vim.api.nvim_create_user_command("FlutterRunApp", "lua require('flutterhelp').startDaemon()", {})
+	vim.api.nvim_create_user_command("FlutterStopApp", "lua require('flutterhelp').stopDaemon()", {})
+	vim.api.nvim_create_user_command("FlutterReload", "lua require('flutterhelp').reload()", {})
 end
 
 function M.handle_output(err, data)
@@ -11,19 +13,28 @@ function M.handle_output(err, data)
 		print("Error", err)
 		return
 	end
-	print(data)
+	local output = vim.fn.json_decode(data)
+	if output.event == nil then
+		print("Output", output)
+		return
+	end
+
+	if output.event == "app.start" then
+		M.appId = output.params.appId
+		print("App started", output.params.appId)
+	end
 end
 
-function M.startDaemon()
+function M.runApp()
 	M.uv = vim.uv
 	M.stdin = M.uv.new_pipe(false)
 	M.stdout = M.uv.new_pipe(false)
 	M.stderr = M.uv.new_pipe(false)
 	M.handle, M.pid = M.uv.spawn("flutter", {
-		args = {"daemon"},
+		args = {"run", "--machine"},
 		stdio = {M.stdin, M.stdout, M.stderr},
 	}, function(code, signal)
-		print("Daemon exited with code", code, signal)
+		print("Exited with code", code, signal)
 		M.stdin:close()
 		M.stdout:close()
 		M.stderr:close()
@@ -35,16 +46,49 @@ function M.startDaemon()
 
 end
 
-function M.stopDaemon()
+function M.stopApp()
 	M.stdin:write("q")
 	M.stdin:close()
 	M.stdout:close()
 	M.stderr:close()
 end
 
+-- commands
 function M.runCommand(command)
 	local json = vim.json.encode(command)
 	M.uv.write(M.stdin, '[' .. json .. ']\n')
+end
+
+function M.appRestart(opts)
+	M.id = M.id + 1
+	local appId = M.appId
+	assert(appId ~= "", "appId is required!")
+	assert(appId ~= nil, "appId is required!")
+
+	local fullRestart = opts.fullRestart or true
+	local reason = opts.reason or "manual"
+	local pause = opts.pause or false
+	local debounce = opts.debounce or false
+
+	local command = {
+		id = M.id,
+		method = "app.restart",
+		params = {
+			appId = appId,
+			fullRestart = fullRestart,
+			reason = reason,
+			pause = pause,
+			debounce = debounce
+		}
+	}
+	M.runCommand(command)
+end
+
+function M.reload()
+	M.appRestart({
+		fullRestart = false,
+		reason = "hot-reload"
+	})
 end
 
 return M

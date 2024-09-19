@@ -1,5 +1,21 @@
 local M = {}
 
+local function write_log(message)
+    -- Open the file in append mode ('a' stands for append)
+    local log_file = io.open("/Users/vlad/Documents/lua/flutterhelp/log", "a")
+    if log_file then
+        -- Get the current time to prefix the log entry
+        local log_time = os.date("%Y-%m-%d %H:%M:%S")
+        -- Write the log message with a newline at the end
+        log_file:write("[" .. log_time .. "] " .. message .. "\n")
+        -- Close the file
+        log_file:close()
+    else
+        -- Print error message if the file could not be opened
+        print("Error: Could not open log file!")
+    end
+end
+
 function M.setup(opts)
 	opts = opts or {}
 	M.id = 0
@@ -13,6 +29,7 @@ function M.handle_output(err, data)
 		print("Error", err)
 		return
 	end
+	write_log(data)
 	local output = vim.json.decode(data)
 	if output.event == nil then
 		print("Output", output)

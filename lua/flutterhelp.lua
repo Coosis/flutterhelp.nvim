@@ -13,7 +13,7 @@ function M.handle_output(err, data)
 		print("Error", err)
 		return
 	end
-	local output = vim.fn.json_decode(data)
+	local output = vim.json.decode(data)
 	if output.event == nil then
 		print("Output", output)
 		return

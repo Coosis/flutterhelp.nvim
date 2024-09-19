@@ -30,7 +30,12 @@ function M.handle_output(err, data)
 		return
 	end
 	write_log(data)
-	local output = vim.json.decode(data)
+	local status, output = pcall(vim.json.decode, data)
+	if not status then
+		print(data)
+		return
+	end
+
 	if output.event == nil then
 		print("Output", output)
 		return

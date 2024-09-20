@@ -189,7 +189,10 @@ function M.restartApp(opts)
 	assert(appId ~= "", "appId is required!")
 	assert(appId ~= nil, "appId is required!")
 
-	local fullRestart = opts.fullRestart or true
+	local fullRestart = true
+	if opts.fullRestart == false then
+		fullRestart = false
+	end
 	local reason = opts.reason or "manual"
 	local pause = opts.pause or false
 	local debounce = opts.debounce or false

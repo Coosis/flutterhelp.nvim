@@ -52,6 +52,17 @@ function M.setup(opts)
 	vim.api.nvim_create_user_command("FlutterRestartApp", "lua require('flutterhelp').restartApp()", {})
 	vim.api.nvim_create_user_command("FlutterReload", "lua require('flutterhelp').reload()", {})
 	vim.api.nvim_create_user_command("FlutterHelpPurge", "lua require('flutterhelp').purge()", {})
+
+	local pattern = opts.pattern or "*.dart"
+	if opts.detectAll then
+		pattern = "*"
+	end
+	vim.api.nvim_create_autocmd("BufWritePost", {
+		pattern = pattern,
+		callback = function()
+			M.reload()
+		end
+	})
 end
 
 function M.purge()
@@ -196,8 +207,6 @@ function M.restartApp(opts)
 	local reason = opts.reason or "manual"
 	local pause = opts.pause or false
 	local debounce = opts.debounce or false
-
-	print("fullRestart: " .. tostring(fullRestart))
 
 	M.sendMethod("app.restart", {
 		appId = appId,

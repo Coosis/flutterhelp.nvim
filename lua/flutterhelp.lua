@@ -10,14 +10,16 @@ local M = {
 	lastReloadId = 0,
 }
 
-local default_log_dir = vim.fn.stdpath("data") .. "/flutterhelp/fhelp.log"
+local default_log_dir = vim.fn.stdpath("data") .. "/flutterhelp/"
+local logfile = "fhelp.log"
 local function log(message, std)
 	std = std or false
 	if std then
 		print(message)
 	end
+	os.execute("mkdir -p " .. M.log_dir)
     -- open log in append mode
-    local log_file = io.open(M.log_dir, "a")
+    local log_file = io.open(M.log_dir .. logfile, "a")
     if log_file then
         -- time prefix
         local log_time = os.date("%Y-%m-%d %H:%M:%S")

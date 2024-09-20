@@ -41,6 +41,7 @@ end
 
 function M.setup(opts)
 	M.id = 0
+	opts = opts or {}
 	M.log_dir = opts.log_dir or get_log_dir()
 	vim.api.nvim_create_user_command("FlutterInspect", "lua require('flutterhelp').inspect()", {})
 	vim.api.nvim_create_user_command("FlutterRunApp", "lua require('flutterhelp').runApp()", {})

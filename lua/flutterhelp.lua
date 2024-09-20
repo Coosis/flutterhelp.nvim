@@ -72,11 +72,19 @@ function M.handle_response(output)
 			log("Restarted app: " .. output.result.appId, true)
 			M.appId = output.result.appId
 		else if output.id == M.lastStopId then
-			log("Stopped app: " .. output.result.appId, true)
-			M.appId = ""
+			local result = output.result
+			if result.code == 0 then
+				log("Stopped app: " .. output.result.appId, true)
+			else
+				log("Error code " .. result.code .. ", Failed to stop app: " .. output.result.appId, true)
+			end
 		else if output.id == M.lastReloadId then
-			log("Reloaded app: " .. output.result.appId, true)
-			M.appId = output.result.appId
+			local result = output.result
+			if result.code == 0 then
+				log("Reloaded app: " .. output.result.appId, true)
+			else
+				log("Error code " .. result.code .. ", Failed to reload app: " .. output.result.appId, true)
+			end
 		end end end
 	end
 end

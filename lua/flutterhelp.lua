@@ -86,7 +86,7 @@ function M.handle_output(err, data)
 		log(err, true)
 		return
 	end
-	log(data)
+
 	local status, output = pcall(vim.json.decode, data)
 	-- pure text
 	if not status then
@@ -103,6 +103,7 @@ function M.handle_output(err, data)
 	-- check if output is a response
 	if output.event == nil then
 		M.handle_response(output)
+		return
 	end
 
 	-- handle events

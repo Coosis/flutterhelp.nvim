@@ -170,6 +170,7 @@ function M.sendMethod(method, params)
 end
 
 function M.restartApp(opts)
+	opts = opts or {}
 	local appId = M.appId
 	assert(appId ~= "", "appId is required!")
 	assert(appId ~= nil, "appId is required!")

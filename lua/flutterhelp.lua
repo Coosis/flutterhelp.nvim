@@ -33,7 +33,7 @@ end
 
 local function get_log_dir()
 	local logdir = vim.fn.getenv("FLUTTERHELP_LOG_DIR")
-	if logdir == nil or logdir == "" then
+	if logdir == nil or logdir == "" or logdir == vim.NIL then
 		logdir = default_log_dir
 		vim.fn.setenv("FLUTTERHELP_LOG_DIR", logdir)
 	end

@@ -194,6 +194,8 @@ function M.restartApp(opts)
 	local pause = opts.pause or false
 	local debounce = opts.debounce or false
 
+	print("fullRestart: " .. tostring(fullRestart))
+
 	M.sendMethod("app.restart", {
 		appId = appId,
 		fullRestart = fullRestart,

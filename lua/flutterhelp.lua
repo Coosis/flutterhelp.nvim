@@ -107,7 +107,7 @@ function M.handle_output(err, data)
 	end
 
 	-- handle events
-	log("event:" .. output.event)
+	log(data, false)
 	if output.event == "app.start" then
 		M.appId = output.params.appId
 		log("App started: " .. output.params.appId, true)
@@ -190,7 +190,7 @@ end
 
 -- calls restart with fullRestart = false
 function M.reload()
-	M.appRestart({
+	M.restartApp({
 		fullRestart = false,
 		reason = "hot-reload"
 	})

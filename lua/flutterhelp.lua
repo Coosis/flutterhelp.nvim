@@ -64,6 +64,10 @@ function M.inspect()
 	log("appId:" .. M.appId, true)
 	log("id:" .. M.id, true)
 	log("pid:" .. M.pid, true)
+
+	log("lastRestartId:" .. M.lastRestartId, true)
+	log("lastStopId:" .. M.lastStopId, true)
+	log("lastReloadId:" .. M.lastReloadId, true)
 end
 
 function M.handle_response(output)
@@ -157,12 +161,14 @@ end
 function M.sendMethod(method, params)
 	M.id = M.id + 1
 	if method == "app.restart" then
-		M.lastRestartId = M.id
+		if params.fullRestart == false then
+			M.lastReloadId = M.id
+		else
+			M.lastRestartId = M.id
+		end
 	else if method == "app.stop" then
 		M.lastStopId = M.id
-	else if method == "app.reload" then
-		M.lastReloadId = M.id
-	end end end
+	end end
 	local command = {
 		id = M.id,
 		method = method,

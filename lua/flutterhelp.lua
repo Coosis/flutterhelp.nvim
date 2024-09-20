@@ -1,69 +1,112 @@
 local M = {
+	log_dir = "",
 	appId = "",
 	id = 0,
 	pid = 0,
+
+	-- last ids of requests
+	lastRestartId = 0,
+	lastStopId = 0,
+	lastReloadId = 0,
 }
 
-local function write_log(message)
-    -- Open the file in append mode ('a' stands for append)
-    local log_file = io.open("/Users/vlad/Documents/lua/flutterhelp/a.log", "a")
+local default_log_dir = vim.fn.stdpath("data") .. "/flutterhelp/fhelp.log"
+local function log(message, std)
+	std = std or false
+	if std then
+		print(message)
+	end
+    -- open log in append mode
+    local log_file = io.open(M.log_dir, "a")
     if log_file then
-        -- Get the current time to prefix the log entry
+        -- time prefix
         local log_time = os.date("%Y-%m-%d %H:%M:%S")
-        -- Write the log message with a newline at the end
-        log_file:write("[" .. log_time .. "] " .. message .. "\n")
-        -- Close the file
+        -- write with a newline
+        log_file:write("[" .. log_time .. "]" .. message .. "\n")
+		-- close the file
         log_file:close()
     else
-        -- Print error message if the file could not be opened
         print("Error: Could not open log file!")
+		print("Log file path: " .. M.log_dir)
     end
 end
 
+local function get_log_dir()
+	local logdir = vim.fn.getenv("FLUTTERHELP_LOG_DIR")
+	if logdir == nil or logdir == "" then
+		logdir = default_log_dir
+		vim.fn.setenv("FLUTTERHELP_LOG_DIR", logdir)
+	end
+end
+
 function M.setup(opts)
-	opts = opts or {}
 	M.id = 0
+	M.log_dir = opts.log_dir or get_log_dir()
 	vim.api.nvim_create_user_command("FlutterInspect", "lua require('flutterhelp').inspect()", {})
 	vim.api.nvim_create_user_command("FlutterRunApp", "lua require('flutterhelp').runApp()", {})
 	vim.api.nvim_create_user_command("FlutterStopApp", "lua require('flutterhelp').stopApp()", {})
+	vim.api.nvim_create_user_command("FlutterRestartApp", "lua require('flutterhelp').restartApp()", {})
 	vim.api.nvim_create_user_command("FlutterReload", "lua require('flutterhelp').reload()", {})
+	vim.api.nvim_create_user_command("FlutterHelpPurge", "lua require('flutterhelp').purge()", {})
+end
+
+function M.purge()
+	vim.fn.delete(M.log_dir, "rf")
 end
 
 function M.inspect()
-	print("appId", M.appId)
-	print("id", M.id)
-	print("pid", M.pid)
+	log("inspecting:")
+	log("log_dir:" .. M.log_dir, true)
+	log("appId:" .. M.appId, true)
+	log("id:" .. M.id, true)
+	log("pid:" .. M.pid, true)
+end
+
+function M.handle_response(output)
+	if output.id ~= nil then
+		if output.id == M.lastRestartId then
+			log("Restarted app: " .. output.result.appId, true)
+			M.appId = output.result.appId
+		else if output.id == M.lastStopId then
+			log("Stopped app: " .. output.result.appId, true)
+			M.appId = ""
+		else if output.id == M.lastReloadId then
+			log("Reloaded app: " .. output.result.appId, true)
+			M.appId = output.result.appId
+		end end end
+	end
 end
 
 function M.handle_output(err, data)
 	if err then
-		print("Error", err)
+		log(err, true)
 		return
 	end
-	write_log(data)
+	log(data)
 	local status, output = pcall(vim.json.decode, data)
+	-- pure text
 	if not status then
-		print(data)
+		log(data)
 		return
 	end
 
 	if output[1] == nil then
-		print("Output is nil")
+		log("Output is nil")
 		return
 	end
-
 	output = output[1]
 
+	-- check if output is a response
 	if output.event == nil then
-		print("Output", output)
-		return
+		M.handle_response(output)
 	end
 
-	write_log(output.event)
-
+	-- handle events
+	log("event:" .. output.event)
 	if output.event == "app.start" then
 		M.appId = output.params.appId
-		print("App started", output.params.appId)
+		log("App started: " .. output.params.appId, true)
+		return
 	end
 end
 
@@ -88,21 +131,30 @@ function M.runApp()
 
 end
 
-function M.stopApp()
-	M.stdin:write("q")
-	M.stdin:close()
-	M.stdout:close()
-	M.stderr:close()
-end
-
 -- commands
 function M.runCommand(command)
 	local json = vim.json.encode(command)
 	M.uv.write(M.stdin, '[' .. json .. ']\n')
 end
 
-function M.appRestart(opts)
+function M.sendMethod(method, params)
 	M.id = M.id + 1
+	if method == "app.restart" then
+		M.lastRestartId = M.id
+	else if method == "app.stop" then
+		M.lastStopId = M.id
+	else if method == "app.reload" then
+		M.lastReloadId = M.id
+	end end end
+	local command = {
+		id = M.id,
+		method = method,
+		params = params
+	}
+	M.runCommand(command)
+end
+
+function M.restartApp(opts)
 	local appId = M.appId
 	assert(appId ~= "", "appId is required!")
 	assert(appId ~= nil, "appId is required!")
@@ -112,20 +164,26 @@ function M.appRestart(opts)
 	local pause = opts.pause or false
 	local debounce = opts.debounce or false
 
-	local command = {
-		id = M.id,
-		method = "app.restart",
-		params = {
-			appId = appId,
-			fullRestart = fullRestart,
-			reason = reason,
-			pause = pause,
-			debounce = debounce
-		}
-	}
-	M.runCommand(command)
+	M.sendMethod("app.restart", {
+		appId = appId,
+		fullRestart = fullRestart,
+		reason = reason,
+		pause = pause,
+		debounce = debounce
+	})
 end
 
+function M.stopApp()
+	local appId = M.appId
+	assert(appId ~= "", "appId is required!")
+	assert(appId ~= nil, "appId is required!")
+
+	M.sendMethod("app.stop", {
+		appId = appId
+	})
+end
+
+-- calls restart with fullRestart = false
 function M.reload()
 	M.appRestart({
 		fullRestart = false,

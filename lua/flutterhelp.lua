@@ -95,12 +95,7 @@ function M.handle_response(output)
 	end
 end
 
-function M.handle_output(err, data)
-	if err then
-		log(err, true)
-		return
-	end
-
+function M.handle_line(data)
 	local status, output = pcall(vim.json.decode, data)
 	-- pure text
 	if not status then
@@ -128,6 +123,17 @@ function M.handle_output(err, data)
 		M.appId = output.params.appId
 		log("App started: " .. output.params.appId, true)
 		return
+	end
+end
+
+function M.handle_output(err, data)
+	if err then
+		log(err, true)
+		return
+	end
+
+	for line in data:gmatch("[^\r\n]+") do
+		M.handle_line(line)
 	end
 end
 

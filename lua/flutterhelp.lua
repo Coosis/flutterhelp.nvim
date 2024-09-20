@@ -33,6 +33,7 @@ end
 
 local function get_log_dir()
 	local logdir = vim.fn.getenv("FLUTTERHELP_LOG_DIR")
+	print("Log dir:" .. logdir)
 	if logdir == nil or logdir == "" then
 		logdir = default_log_dir
 		vim.fn.setenv("FLUTTERHELP_LOG_DIR", logdir)
@@ -43,7 +44,6 @@ function M.setup(opts)
 	M.id = 0
 	opts = opts or {}
 	M.log_dir = opts.log_dir or get_log_dir()
-	print("Log dir: " .. M.log_dir)
 	vim.api.nvim_create_user_command("FlutterInspect", "lua require('flutterhelp').inspect()", {})
 	vim.api.nvim_create_user_command("FlutterRunApp", "lua require('flutterhelp').runApp()", {})
 	vim.api.nvim_create_user_command("FlutterStopApp", "lua require('flutterhelp').stopApp()", {})

@@ -11,7 +11,7 @@ local M = {
 }
 
 local default_log_dir = vim.fn.stdpath("data") .. "/flutterhelp/"
-local logfile = "fhelp.log"
+local logfile = "/fhelp.log"
 local function log(message, std)
 	std = std or false
 	if std then
@@ -54,7 +54,7 @@ function M.setup(opts)
 	vim.api.nvim_create_user_command("FlutterHelpPurge", "lua require('flutterhelp').purge()", {})
 
 	local pattern = opts.pattern or "*.dart"
-	if opts.detectAll then
+	if opts.detectAll == true then
 		pattern = "*"
 	end
 	vim.api.nvim_create_autocmd("BufWritePost", {
@@ -132,6 +132,11 @@ function M.handle_line(data)
 	log(data, false)
 	if output.event == "app.start" then
 		M.appId = output.params.appId
+		log("App starting: " .. output.params.appId, true)
+		return
+	end
+	if output.event == "app.started" then
+		M.appId = output.params.appId
 		log("App started: " .. output.params.appId, true)
 		return
 	end
@@ -140,6 +145,10 @@ end
 function M.handle_output(err, data)
 	if err then
 		log(err, true)
+		return
+	end
+
+	if data == nil then
 		return
 	end
 
